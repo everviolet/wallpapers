@@ -1,0 +1,132 @@
+---
+import Card from "./Card.astro";
+import type { ImageMetadata } from "astro";
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/**/*.{jpeg,jpg,png,gif}",
+);
+
+let re =
+  /^\/src\/assets\/wallpapers\/(?<flavour>\w+)\/(?<type>\w+)\/(?:(?<category>\w+)\/)?(?:(?<author>\w+)\/)?(?<name>\w+)\..*$/;
+
+const walls = Object.keys(images)
+  .map((item) => {
+    // console.log(`item: ${item}`);
+    const match = item.match(re);
+    // console.log(match);
+    if (!match) {
+      throw new Error(`failed to parse image path: ${item}`);
+    }
+    return {
+      path: item,
+      flavour: match.groups?.flavour,
+      type: match.groups?.type,
+      category: match.groups?.category,
+      author: match.groups?.author,
+      name: match.groups?.name,
+    };
+  })
+  .filter((item) => item !== null);
+---
+
+<div class="columns-1 sm:columns-2 lg:columns-3 2xl:columns-4 gap-8">
+  {
+    walls.map((item) => (
+      <Card
+        images={images}
+        imgPath={item.path}
+        name={item.name as string}
+        flavour={item.flavour as string}
+        author={item.author}
+        class="mb-8"
+      />
+    ))
+  }
+</div>
+
+<dialog
+  class="pt-(--nav-h-mobile) lg:pt-(--nav-h-desktop) fixed w-full h-full left-0 top-0 bg-ctp-base/90 backdrop-blur-sm hidden"
+>
+</dialog>
+
+<script>
+  document.querySelectorAll(".card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const imgPath = card.getAttribute("data-imgPath");
+      if (imgPath) {
+        openDialog(imgPath);
+      }
+    });
+  });
+  document.querySelector("dialog")?.addEventListener("click", () => {
+    closeDialog();
+  });
+
+  function openDialog(imgPath: string) {
+    const dialog = document.querySelector("dialog");
+    if (!dialog) return;
+    dialog.open = true;
+    dialog.classList.replace("hidden", "block");
+    dialog.innerHTML = "";
+
+    const loading = document.createElement("div");
+    loading.classList.add(
+      "flex",
+      "justify-center",
+      "items-center",
+      "w-full",
+      "h-full",
+    );
+    loading.innerHTML = `
+      <div class="absolute z-10 animate-pulse flex flex-col justify-center items-center text-ctp-text text-sm">
+        <svg class="animate-spin h-8 w-8 text-ctp-pink" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="mt-2">Loading image...</span>
+      </div>
+      `;
+    dialog.appendChild(loading);
+
+    const images = import.meta.glob<{ default: ImageMetadata }>(
+      "/src/assets/**/*.{jpeg,jpg,png,gif}",
+    );
+    if (!images[imgPath])
+      throw new Error(`"${imgPath}" does not exist in glob`);
+    images[imgPath]().then((module) => {
+      const img = document.createElement("img");
+
+      img.src = module.default.src;
+      img.classList.add(
+        "mx-auto",
+        "mt-4",
+        "max-w-[95vw]",
+        "max-h-[70vh]",
+        "object-contain",
+        "rounded-lg",
+        "shadow-lg",
+        "relative",
+        "z-20",
+        "transition-opacity",
+        "duration-300",
+        "opacity-100",
+      );
+      img.alt = "wallpaper";
+      img.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+      img.addEventListener("load", () => {
+        dialog.innerHTML = "";
+        dialog.appendChild(img);
+      });
+    });
+  }
+
+  function closeDialog() {
+    const dialog = document.querySelector("dialog");
+    if (!dialog) return;
+    dialog.open = false;
+    dialog.classList.replace("block", "hidden");
+    dialog.innerHTML = "";
+  }
+</script>
