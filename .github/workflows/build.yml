@@ -1,105 +1,42 @@
-name: "build and deploy"
+name: Build and populate cache
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+  push:
+    paths:
+      - wallpapers/**/*
 
 jobs:
   build:
-    name: "build wallpapers"
-    runs-on: ubuntu-latest
+    name: Build (${{ matrix.system }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            system: x86_64-linux
+          - os: macos-latest
+            system: aarch64-darwin
+          - os: ubuntu-24.04-arm
+            system: aarch64-linux
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: nixbuild/nix-quick-install-action@v30
-      - uses: nix-community/cache-nix-action@v6
-        id: nix-cache
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Lix
+        uses: DeterminateSystems/nix-installer-action@main
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock', 'scripts/**/*', 'wallpapers/**/*') }}
+          source-url: https://install.lix.systems/lix/lix-installer-${{ matrix.system }}
+          logger: pretty
 
-      - if: ${{ steps.nix-cache.outputs.hit-primary-key == 'false' }}
-        id: nix-build
-        name: "build wallpapers"
-        run: nix build .#full
-
-      - name: "upload build artifacts"
-        if: ${{ steps.nix-build.outcome == 'success' }}
-        uses: actions/upload-artifact@v4
+      - name: Setup cachix
+        uses: cachix/cachix-action@v13
         with:
-          name: nix-result
-          path: result
+          name: everviolet
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: "use cached wallpapers"
-        id: use-cache
-        if: ${{ steps.nix-cache.outputs.hit-primary-key == 'true' }}
-        run: |
-          ln -s $(find /nix/store/ -type d -name '*-wallpapers-*' | head -n 1) result
-          ls -R result
-
-      - name: "upload cache artifacts"
-        if: ${{ steps.use-cache.outcome == 'success' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: nix-result
-          path: result
-
-  upload:
-    name: "upload wallpapers"
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: "download artifacts"
-        uses: actions/download-artifact@v4
-        with:
-          name: nix-result
-          path: result
-
-      - name: "zip wallpapers"
-        run: |
-          mkdir -p dist
-
-          cp -rL --no-preserve=ownership result/share/wallpapers/* dist/
-
-          for dir in dist/*; do
-            zip -r "dist/wallpapers-$(basename "$dir").zip" "$dir"
-          done
-
-      - name: "upload to release"
-        run: gh release upload --clobber wallpapers ./dist/*.zip
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-  build-site:
-    name: "build site"
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: "download artifacts"
-        uses: actions/download-artifact@v4
-        with:
-          name: nix-result
-          path: result
-      - name: install, build, and upload site
-        uses: withastro/action@v3
-        with:
-          path: site
-
-  deploy-site:
-    name: "deploy site"
-    needs: build-site
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Build from the matrix
+        run: nix build -L .#full
