@@ -1,0 +1,93 @@
+$dark-variant: "winter" !default;
+
+@use 'sass:color';
+@use 'sass:list';
+@use 'sass:map';
+@use 'sass:math';
+
+@use "palette" as *;
+
+$prefix: 'ev';
+$variants: (
+  tint: (400, 300, 200, 100, 50),
+  shade: (600, 700, 800, 900, 950)
+);
+$accents: ('red', 'orange', 'yellow', 'lime', 'green', 'aqua',
+  'skye', 'snow', 'blue', 'purple', 'pink', 'cherry');
+$neutrals: (
+  'text', 'subtext1', 'subtext0', 'overlay2', 'overlay1', 'overlay0',
+  'surface2', 'surface1', 'surface0', 'base', 'mantle', 'crust');
+$colornames: list.join($accents, $neutrals);
+
+@function ev-is-accent($color-name) {
+  @return list.index($accents, $color-name) != null;
+}
+
+@function ev-mix($variant, $color1, $color2, $amount) {
+  @return color.mix(ev-get-color($variant, $color1), ev-get-color($variant, $color2), $amount * 1%);
+}
+
+@function tw-n($i) {
+  @if ($i > 500) {
+    @return (math.div(math.abs(1000 - $i), 10))
+  }
+  @return (math.div($i, 10));
+}
+
+@function ev-get-color($variant, $color, $variant-type: default, $i: 500) {
+  @if ($variant-type == 'default') {
+    @return map.get(map.get($ev, $variant), $color);
+  }
+  @if ($variant-type == 'tint') {
+    @return ev-mix($variant, 'text', $color, tw-n($i));
+  }
+  @if ($variant-type == 'shade') {
+    @return ev-mix($variant, 'base', $color, tw-n($i));
+  }
+}
+
+@mixin createVariantPalette($variant) {
+  @each $ev-color-name, $ev-color-value in map.get($ev, $variant) {
+    --everviolet-color-#{$ev-color-name}: #{$ev-color-value};
+    @if (ev-is-accent($ev-color-name)) {
+      --everviolet-color-#{$ev-color-name}-500: #{ev-get-color($variant, $ev-color-name)};
+      @each $variant-type, $variant-identifier in $variants {
+        @for $i from 1 through list.length($variant-identifier) {
+          --everviolet-color-#{$ev-color-name}-#{list.nth($variant-identifier, $i)}: #{ev-get-color($variant, $ev-color-name, $variant-type, $i)};
+        }
+      }
+    }
+  }
+}
+
+@theme inline {
+  @each $ev-color-name in $colornames {
+    --color-#{$prefix}-#{$ev-color-name}: var(--everviolet-color-#{$ev-color-name});
+    @if (ev-is-accent($ev-color-name)) {
+      --color-#{$prefix}-#{$ev-color-name}-500: var(--everviolet-color-#{$ev-color-name}-500);
+      @each $variant-type, $variant-identifier in $variants {
+        @for $i from 1 through list.length($variant-identifier) {
+          --color-#{$prefix}-#{$ev-color-name}-#{list.nth($variant-identifier, $i)}: var(--everviolet-color-#{$ev-color-name}-#{list.nth($variant-identifier, $i)});
+        }
+      }
+    }
+  }
+}
+
+@layer base {
+  :root {
+    @include createVariantPalette('summer');
+    @variant dark {
+      @include createVariantPalette($dark-variant);
+    }
+  }
+  .summer { @include createVariantPalette('summer'); }
+  .spring { @include createVariantPalette('spring'); }
+  .fall { @include createVariantPalette('fall'); }
+  .winter { @include createVariantPalette('winter'); }
+}
+
+@custom-variant summer (&:where(.summer, .summer *));
+@custom-variant spring (&:where(.spring, .spring *));
+@custom-variant fall (&:where(.fall, .fall *));
+@custom-variant winter (&:where(.winter, .winter *));

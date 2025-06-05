@@ -7,6 +7,5 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  site: "https://everviolet.github.io",
-  base: "wallpapers",
+  site: "https://wallpapers.everviolet.xyz",
 });
