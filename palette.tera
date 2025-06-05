@@ -1,0 +1,31 @@
+---
+whiskers:
+  version: ^2.0.0
+  matrix:
+    - flavor
+  filename: "palettes/evergarden-{{flavor.identifier}}"
+---
+#{{red.hex}}
+#{{orange.hex}}
+#{{yellow.hex}}
+#{{lime.hex}}
+#{{green.hex}}
+#{{aqua.hex}}
+#{{skye.hex}}
+#{{snow.hex}}
+#{{blue.hex}}
+#{{purple.hex}}
+#{{pink.hex}}
+#{{cherry.hex}}
+#{{text.hex}}
+#{{subtext1.hex}}
+#{{subtext0.hex}}
+#{{overlay2.hex}}
+#{{overlay1.hex}}
+#{{overlay0.hex}}
+#{{surface2.hex}}
+#{{surface1.hex}}
+#{{surface0.hex}}
+#{{base.hex}}
+#{{mantle.hex}}
+#{{crust.hex}}

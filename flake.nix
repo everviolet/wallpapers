@@ -2,9 +2,10 @@
   description = "evergarden wallpapers";
 
   inputs.nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz";
+  inputs.whiskers.url = "github:everviolet/whiskers";
 
   outputs =
-    { self, nixpkgs }:
+    { self, nixpkgs, whiskers }:
     let
       inherit (nixpkgs) lib;
 
@@ -19,11 +20,11 @@
       forAllSystems = systems: fn: lib.genAttrs systems (system: fn nixpkgs.legacyPackages.${system});
     in
     {
-      overlays.default = _: prev: import ./default.nix { pkgs = prev; };
+      overlays.default = _: prev: import ./default.nix { pkgs = prev; inherit whiskers; };
 
       packages = forAllSystems outputSystems (
         pkgs:
-        (import ./default.nix { inherit pkgs; })
+        (import ./default.nix { inherit pkgs whiskers; })
         // {
           default = self.packages.${pkgs.stdenv.hostPlatform.system}.full;
         }

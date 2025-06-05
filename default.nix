@@ -7,12 +7,15 @@
   lib ? pkgs.lib,
   system ? builtins.currentSystem,
   version ? "unstable",
+
+  whiskers,
 }:
 let
   genVariant =
     variant:
     pkgs.callPackage ./builder.nix {
       inherit variant version;
+      inherit (whiskers.packages.${pkgs.stdenv.hostPlatform.system}) whiskers;
     };
 
   variants = {

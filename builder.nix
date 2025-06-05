@@ -4,6 +4,8 @@
   lutgen,
   writers,
 
+  whiskers,
+
   version ? "unstable",
   variant ? null,
 }:
@@ -15,12 +17,20 @@ in
 stdenvNoCC.mkDerivation {
   inherit pname version;
 
-  src = lib.cleanSource ./wallpapers;
+  src = lib.fileset.toSource {
+    root = ./.;
+    fileset = lib.fileset.union ./wallpapers ./palette.tera;
+  };
 
-  nativeBuildInputs = [ lutgen ];
+  nativeBuildInputs = [
+    lutgen
+    whiskers
+  ];
 
   installPhase = ''
     runHook preInstall
+
+    whiskers palette.tera
 
     mkdir -p $out/share/wallpapers
     ${lib.getExe lutApply} $src $out/share/wallpapers ${lib.optionalString (variant != null) variant}
