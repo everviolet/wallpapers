@@ -11,6 +11,35 @@ permissions:
   id-token: write
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          logger: pretty
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@v13
+        with:
+          name: everviolet
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+      - name: Build from the matrix
+        run: nix build -L .#full
+
+      - run: tar czf wallpapers.tar.gz --directory=result/share/wallpapers .
+
+      - name: Store build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallpapers-result
+          path: wallpapers.tar.gz
+
   build-site:
     name: "build site"
     needs: build
@@ -18,6 +47,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wallpapers-result
+
+      - run: mkdir -p result/share/wallpapers && tar xvf wallpapers.tar.gz -C result/share/wallpapers
 
       - name: install, build, and upload site
         uses: withastro/action@v3
