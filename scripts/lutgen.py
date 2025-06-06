@@ -73,7 +73,7 @@ def generate_lut(palette, level, lut_file):
 
 
 def lutgen(images, output_path=None, palette=None, level=16):
-    command = ['apply', '-d']
+    command = ['apply']
     if palette:
         lut_file = f'{palette}.png'
         command.extend(['--hald-clut', lut_file])
