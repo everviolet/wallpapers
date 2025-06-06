@@ -17,17 +17,17 @@
   .card {
     @apply hidden;
 
-    &.latte {
-      @apply in-[.latte]:inline-block;
+    &.summer {
+      @apply in-[.summer]:inline-block;
     }
-    &.frappe {
-      @apply in-[.frappe]:inline-block;
+    &.spring {
+      @apply in-[.spring]:inline-block;
     }
-    &.macchiato {
-      @apply in-[.macchiato]:inline-block;
+    &.fall {
+      @apply in-[.fall]:inline-block;
     }
-    &.mocha {
-      @apply in-[.mocha]:inline-block;
+    &.winter {
+      @apply in-[.winter]:inline-block;
     }
     &.unthemed {
       @apply in-[.unthemed]:inline-block;
