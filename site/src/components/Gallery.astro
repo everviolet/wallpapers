@@ -3,11 +3,11 @@ import Card from "./Card.astro";
 import type { ImageMetadata } from "astro";
 
 const images = import.meta.glob<{ default: ImageMetadata }>(
-  "/src/assets/**/*.{jpeg,jpg,png,gif}",
+  "/src/assets/wallpapers/*.{jpeg,jpg,png,gif}",
 );
 
 let re =
-  /^\/src\/assets\/wallpapers\/(?<flavour>\w+)\/(?<type>\w+)\/(?:(?<category>\w+)\/)?(?:(?<author>\w+)\/)?(?<name>\w+)\..*$/;
+  /^\/src\/assets\/wallpapers\/(?<flavour>(\w|-)+)\/(?<type>(\w|-)+)\/(?:(?<category>(\w|-)+)\/)?(?:(?<author>(\w|-)+)\/)?(?<name>(\w|-)+)\.\w*$/;
 
 const walls = Object.keys(images)
   .map((item) => {
