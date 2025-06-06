@@ -1,6 +1,6 @@
 const variants = ["summer", "spring", "fall", "winter", "unthemed"];
 
-applyTheme("summer");
+applyTheme("fall");
 
 // variant selector listeners
 variants.forEach((variant) => {
